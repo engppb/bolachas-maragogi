@@ -1,0 +1,1 @@
+Coloque aqui os recortes (PNG/WebP com fundo transparente, quadrados, ~1000x1000 px) e aponte em src/data/products.ts

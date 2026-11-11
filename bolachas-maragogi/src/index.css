@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+/* "static" emite todas as variáveis: o carrossel original lê --color-* diretamente via var(). */
+@theme static {
+  --color-background: #0b1030;
+  --color-foreground: #fff4d6;
+  --color-primary: #ffc81e;
+  --color-muted-foreground: #c9c3a8;
+  --color-surface: #141b4a;
+  --color-surface-2: #1b2360;
+  --color-orange: #f26b21;
+  --color-brown: #8a3b1f;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
