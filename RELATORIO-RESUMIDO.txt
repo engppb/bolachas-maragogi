@@ -1,0 +1,508 @@
+﻿=== AUDITORIA RESUMIDA - BOLACHAS MARAGOGI ===
+
+=== GIT ===
+?? RELATORIO-AUDITORIA.txt
+?? RELATORIO-RESUMIDO.txt
+
+=== PACKAGE.JSON ===
+{
+  "name": "bolachas-maragogi",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "backup:zip": "node scripts/create-project-backup.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "gsap": "^3.12.5",
+    "lucide-react": "^0.460.0",
+    "motion": "^12.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "~5.6.3",
+    "vite": "^6.0.0"
+  }
+}
+
+
+=== APP.TSX ===
+import { MotionConfig } from "motion/react"
+import { Header } from "@/components/store/Header"
+import { Hero } from "@/components/store/Hero"
+import { Showcase } from "@/components/store/Showcase"
+import { Products } from "@/components/store/Products"
+import { Tradition } from "@/components/store/Tradition"
+import { HowToBuy } from "@/components/store/HowToBuy"
+import { Footer } from "@/components/store/Footer"
+import { WhatsAppFab } from "@/components/store/WhatsAppFab"
+import { StoreDataProvider } from "@/data/StoreData"
+import { AdminApp } from "@/components/admin/AdminApp"
+import { StoreBanners } from "@/components/store/StoreBanners"
+
+function PublicStore() {
+  return (
+    <MotionConfig reducedMotion="user">
+      {/* Sem overflow em ancestrais: o carrossel original usa position: sticky. */}
+      <Header />
+      <main>
+        <Hero />
+        <StoreBanners />
+        <Showcase />
+        <Products />
+        <Tradition />
+        <HowToBuy />
+      </main>
+      <Footer />
+      <WhatsAppFab />
+    </MotionConfig>
+  )
+}
+
+export default function App() {
+  if (window.location.pathname.replace(/\/+$/, "") === "/admin") return <AdminApp />
+  return <StoreDataProvider><PublicStore /></StoreDataProvider>
+}
+
+
+=== SUPABASE.TS ===
+import { createClient } from "@supabase/supabase-js"
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const supabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null
+
+
+=== VERCEL.JSON ===
+
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+
+
+=== PONTOS IMPORTANTES DO ADMIN ===
+
+src\components\admin\AdminApp.tsx:51:function mapProduct(row: Record<string, unknown>): 
+Product {
+src\components\admin\AdminApp.tsx:68:function fieldClass() {
+src\components\admin\AdminApp.tsx:72:function Button({ children, className = "", 
+...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+src\components\admin\AdminApp.tsx:76:function AdminLogin({ onLogin }: { onLogin: (email: 
+string, password: string) => Promise<void> }) {
+src\components\admin\AdminApp.tsx:79:  const [error, setError] = useState("")
+src\components\admin\AdminApp.tsx:82:  const submit = async (event: FormEvent) => {
+src\components\admin\AdminApp.tsx:84:    setError("")
+src\components\admin\AdminApp.tsx:89:      setError(loginError instanceof Error ? 
+loginError.message : "Não foi possível entrar.")
+src\components\admin\AdminApp.tsx:110:function ProductEditor({ product, onClose, onSave 
+}: { product: Product; onClose: () => void; onSave: (product: Product) => void }) {
+src\components\admin\AdminApp.tsx:112:  const [error, setError] = useState("")
+src\components\admin\AdminApp.tsx:117:      setError("Informe o nome do produto.")
+src\components\admin\AdminApp.tsx:121:      setError("O peso deve ser maior que zero ou 
+ficar em branco.")
+src\components\admin\AdminApp.tsx:125:      setError("O preço deve ser zero ou maior, ou 
+ficar em branco.")
+src\components\admin\AdminApp.tsx:146:          <label className="flex cursor-pointer 
+items-center gap-2 rounded-xl border border-dashed border-white/20 p-3 text-sm 
+text-[#ffc81e]"><ImagePlus size={18} /> Enviar imagem principal<input 
+className="sr-only" type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && 
+void onUpload(e.target.files[0], (url) => patch("image", url), setError)} /></label>
+src\components\admin\AdminApp.tsx:147:          <label className="flex cursor-pointer 
+items-center gap-2 rounded-xl border border-dashed border-white/20 p-3 text-sm 
+text-[#ffc81e]"><Upload size={18} /> Adicionar fotos à galeria<input className="sr-only" 
+type="file" accept="image/*" multiple onChange={(e) => { const files = 
+Array.from(e.target.files ?? []); void Promise.all(files.map((file) => 
+uploadImage(file))).then((urls) => patch("gallery", [...draft.gallery, 
+...urls])).catch((uploadError: unknown) => setError(uploadError instanceof Error ? 
+uploadError.message : "Falha ao enviar imagem.")) }} /></label>
+src\components\admin\AdminApp.tsx:157:async function uploadImage(file: File): 
+Promise<string> {
+src\components\admin\AdminApp.tsx:163:  const { error } = await 
+supabase.storage.from("store-images").upload(path, file, { contentType: file.type, 
+upsert: false })
+src\components\admin\AdminApp.tsx:165:  return 
+supabase.storage.from("store-images").getPublicUrl(path).data.publicUrl
+src\components\admin\AdminApp.tsx:168:async function onUpload(file: File, setUrl: (url: 
+string) => void, setError: (message: string) => void) {
+src\components\admin\AdminApp.tsx:170:    setUrl(await uploadImage(file))
+src\components\admin\AdminApp.tsx:172:    setError(error instanceof Error ? 
+error.message : "Falha ao enviar imagem.")
+src\components\admin\AdminApp.tsx:176:export function AdminApp() {
+src\components\admin\AdminApp.tsx:187:  const [error, setError] = useState("")
+src\components\admin\AdminApp.tsx:198:      if (sessionError) 
+setError(sessionError.message)
+src\components\admin\AdminApp.tsx:216:    void 
+client.from("admin_users").select("user_id").eq("user_id", 
+session.user.id).maybeSingle().then(({ data, error: authorizationError }) => {
+src\components\admin\AdminApp.tsx:219:        setError(`Falha ao verificar autorização: 
+${authorizationError.message}`)
+src\components\admin\AdminApp.tsx:233:    const load = async () => {
+src\components\admin\AdminApp.tsx:235:        
+client.from("products").select("*").order("sort_order"),
+src\components\admin\AdminApp.tsx:236:        
+client.from("banners").select("*").order("sort_order"),
+src\components\admin\AdminApp.tsx:237:        
+client.from("store_settings").select("*").eq("id", 1).maybeSingle(),
+src\components\admin\AdminApp.tsx:242:        setError(`Falha ao carregar os dados: 
+${failure.message}`)
+src\components\admin\AdminApp.tsx:258:  const markDirty = () => { setDirty(true); 
+setNotice(""); setError("") }
+src\components\admin\AdminApp.tsx:260:  const login = async (email: string, password: 
+string) => {
+src\components\admin\AdminApp.tsx:262:    const { error: loginError } = await 
+supabase.auth.signInWithPassword({ email, password })
+src\components\admin\AdminApp.tsx:266:  const publish = async () => {
+src\components\admin\AdminApp.tsx:269:    setError("")
+src\components\admin\AdminApp.tsx:271:    const { error: publishError } = await 
+supabase.rpc("publish_store_content", {
+src\components\admin\AdminApp.tsx:278:      setError(`Não foi possível publicar. Nenhuma 
+alteração foi aplicada: ${publishError.message}`)
+src\components\admin\AdminApp.tsx:295:  const importJson = async (file?: File) => {
+src\components\admin\AdminApp.tsx:297:    setError("")
+src\components\admin\AdminApp.tsx:299:      const parsed: unknown = JSON.parse(await 
+file.text())
+src\components\admin\AdminApp.tsx:317:      setError(importError instanceof Error ? 
+importError.message : "Não foi possível importar o arquivo.")
+src\components\admin\AdminApp.tsx:325:  if (!authorized) return <main className="grid 
+min-h-screen place-items-center bg-[#0b1030] px-5 text-[#fff4d6]"><div 
+className="max-w-lg rounded-3xl bg-[#141b4a] p-8 text-center"><ShieldCheck size={42} 
+className="mx-auto text-[#ffc81e]" /><h1 className="mt-4 font-display text-2xl 
+font-extrabold">Acesso não autorizado</h1><p className="mt-2 text-sm 
+text-[#c9c3a8]">{error || "Esta conta não está autorizada como administradora. Peça a um 
+responsável para adicioná-la à allowlist do Supabase."}</p><Button onClick={() => void 
+supabase?.auth.signOut()} className="mt-6 border 
+border-white/20">Sair</Button></div></main>
+src\components\admin\AdminApp.tsx:349:        <button onClick={() => void 
+supabase?.auth.signOut()} className="mt-4 flex min-h-11 w-full items-center gap-2 px-3 
+text-sm text-[#c9c3a8] hover:text-white"><LogOut size={17} /> Sair</button>
+src\components\admin\AdminApp.tsx:365:        {view === "images" && <section 
+className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{products.map((product) => <article 
+key={product.id} className="rounded-2xl border border-white/10 bg-[#141b4a] p-4"><div 
+className="grid aspect-square place-items-center rounded-xl bg-[#0b1030]">{product.image 
+? <img src={product.image} alt={product.imageAlt} className="size-full object-contain" 
+/> : <span className="text-sm text-[#c9c3a8]">Sem foto</span>}</div><h2 className="mt-3 
+font-bold">{product.flavor || "Produto sem nome"}</h2><label className="mt-3 flex 
+min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border 
+border-dashed border-white/20 text-sm text-[#ffc81e]"><Upload size={16} /> 
+Enviar/substituir<input type="file" accept="image/*" className="sr-only" onChange={(e) 
+=> { const file = e.target.files?.[0]; if (file) void onUpload(file, (url) => { 
+setProducts((current) => current.map((item) => item.id === product.id ? { ...item, 
+image: url } : item)); markDirty() }, setError) }} /></label><p className="mt-3 text-xs 
+text-[#c9c3a8]">Galeria: {product.gallery.length} foto(s). Para editar galeria e texto 
+alternativo, abra o editor do produto.</p><Button onClick={() => 
+setEditingProduct(product)} className="mt-2 border border-white/15">Editar 
+galeria</Button></article>)}</section>}
+src\components\admin\AdminApp.tsx:367:        {view === "banners" && <section><div 
+className="mb-4 flex justify-end"><Button onClick={addBanner} className="bg-[#ffc81e] 
+text-[#0b1030]"><Plus size={17} /> Adicionar banner</Button></div><div className="grid 
+gap-4 lg:grid-cols-2">{banners.map((banner, index) => <article key={banner.id} 
+className="rounded-2xl border border-white/10 bg-[#141b4a] p-4"><div className="flex 
+items-center justify-between"><h2 className="font-bold">Banner {index + 1}</h2><Button 
+onClick={() => { setBanners((current) => current.filter((item) => item.id !== 
+banner.id)); markDirty() }} className="px-2 text-red-300"><Trash2 size={16} 
+/></Button></div>{banner.image && <img src={banner.image} alt={banner.title} 
+className="mt-3 max-h-48 w-full rounded-xl object-cover" />}<label className="mt-3 block 
+text-sm">Título<input className={fieldClass()} value={banner.title} onChange={(e) => { 
+setBanners((current) => current.map((item) => item.id === banner.id ? { ...item, title: 
+e.target.value } : item)); markDirty() }} /></label><label className="mt-3 block 
+text-sm">Link (opcional)<input className={fieldClass()} type="url" value={banner.href} 
+onChange={(e) => { setBanners((current) => current.map((item) => item.id === banner.id ? 
+{ ...item, href: e.target.value } : item)); markDirty() }} /></label><label 
+className="mt-3 flex min-h-11 cursor-pointer items-center gap-2 text-sm 
+text-[#ffc81e]"><Upload size={16} /> Enviar imagem<input className="sr-only" type="file" 
+accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) void 
+onUpload(file, (url) => { setBanners((current) => current.map((item) => item.id === 
+banner.id ? { ...item, image: url } : item)); markDirty() }, setError) }} 
+/></label><label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" 
+checked={banner.enabled} onChange={(e) => { setBanners((current) => current.map((item) 
+=> item.id === banner.id ? { ...item, enabled: e.target.checked } : item)); markDirty() 
+}} /> Publicado na vitrine</label></article>)}</div><p className="mt-4 text-sm 
+text-[#c9c3a8]">Os banners publicados ficam disponíveis no banco para futuras seções do 
+site. Os banners atuais do hero e da tradição também podem ser atualizados em 
+Configurações.</p></section>}
+src\components\admin\AdminApp.tsx:369:        {view === "settings" && <section 
+className="max-w-2xl rounded-2xl border border-white/10 bg-[#141b4a] p-5"><h2 
+className="font-display text-xl font-extrabold">Identidade e contato</h2><label 
+className="mt-4 block text-sm">Slogan<input className={fieldClass()} 
+value={settings.brandSlogan} onChange={(e) => { setSettings((current) => ({ ...current, 
+brandSlogan: e.target.value })); markDirty() }} /></label><label className="mt-4 block 
+text-sm">WhatsApp (DDI + DDD + número)<input className={fieldClass()} 
+inputMode="numeric" value={settings.whatsappNumber} onChange={(e) => { 
+setSettings((current) => ({ ...current, whatsappNumber: e.target.value })); markDirty() 
+}} placeholder="Ex.: 5582..." /></label>{(["heroImage", "traditionImage"] as 
+const).map((key) => <div key={key} className="mt-5"><p className="text-sm">{key === 
+"heroImage" ? "Imagem principal do site" : "Imagem da seção Desde 
+1950"}</p>{settings[key] && <img src={settings[key]} alt="" className="mt-2 max-h-48 
+rounded-xl object-cover" />}<label className="mt-2 flex min-h-11 cursor-pointer 
+items-center gap-2 text-sm text-[#ffc81e]"><Upload size={16} /> Substituir imagem<input 
+type="file" accept="image/*" className="sr-only" onChange={(e) => { const file = 
+e.target.files?.[0]; if (file) void onUpload(file, (url) => { setSettings((current) => 
+({ ...current, [key]: url })); markDirty() }, setError) }} /></label></div>)}<p 
+className="mt-5 text-xs text-[#c9c3a8]">Não alteramos "Desde 1950" nem textos comerciais 
+da marca por padrão.</p></section>}
+
+
+
+=== PONTOS IMPORTANTES DO SQL ===
+
+supabase\schema.sql:3:create table if not exists public.admin_users (
+supabase\schema.sql:8:create table if not exists public.products (
+supabase\schema.sql:27:create table if not exists public.store_settings (
+supabase\schema.sql:33:create table if not exists public.banners (
+supabase\schema.sql:43:create or replace function public.is_store_admin()
+supabase\schema.sql:47:security definer
+supabase\schema.sql:57:grant execute on function public.is_store_admin() to anon, 
+authenticated;
+supabase\schema.sql:59:alter table public.admin_users enable row level security;
+supabase\schema.sql:60:alter table public.products enable row level security;
+supabase\schema.sql:61:alter table public.store_settings enable row level security;
+supabase\schema.sql:62:alter table public.banners enable row level security;
+supabase\schema.sql:64:grant select on public.admin_users to authenticated;
+supabase\schema.sql:65:grant select on public.products, public.store_settings, 
+public.banners to anon, authenticated;
+supabase\schema.sql:66:grant insert, update, delete on public.products, 
+public.store_settings, public.banners to authenticated;
+supabase\schema.sql:69:create policy "Admin can read own membership" on 
+public.admin_users
+supabase\schema.sql:73:create policy "Public can read enabled products" on 
+public.products
+supabase\schema.sql:77:create policy "Admins manage products" on public.products
+supabase\schema.sql:82:create policy "Public can read store settings" on 
+public.store_settings
+supabase\schema.sql:86:create policy "Admins manage store settings" on 
+public.store_settings
+supabase\schema.sql:91:create policy "Public can read enabled banners" on public.banners
+supabase\schema.sql:95:create policy "Admins manage banners" on public.banners
+supabase\schema.sql:99:create or replace function public.publish_store_content(
+supabase\schema.sql:106:security invoker
+supabase\schema.sql:119:  insert into public.products (
+supabase\schema.sql:147:  delete from public.products
+supabase\schema.sql:150:  insert into public.store_settings (id, settings, updated_at)
+supabase\schema.sql:154:  insert into public.banners (id, title, image, href, enabled, 
+sort_order, updated_at)
+supabase\schema.sql:169:  delete from public.banners
+supabase\schema.sql:175:grant execute on function public.publish_store_content(jsonb, 
+jsonb, jsonb) to authenticated;
+supabase\schema.sql:177:insert into storage.buckets (id, name, public, file_size_limit, 
+allowed_mime_types)
+supabase\schema.sql:182:drop policy if exists "Public can read store images" on 
+storage.objects;
+supabase\schema.sql:183:create policy "Public can read store images" on storage.objects
+supabase\schema.sql:186:drop policy if exists "Admins can upload store images" on 
+storage.objects;
+supabase\schema.sql:187:create policy "Admins can upload store images" on storage.objects
+supabase\schema.sql:190:drop policy if exists "Admins can update store images" on 
+storage.objects;
+supabase\schema.sql:191:create policy "Admins can update store images" on storage.objects
+supabase\schema.sql:195:drop policy if exists "Admins can delete store images" on 
+storage.objects;
+supabase\schema.sql:196:create policy "Admins can delete store images" on storage.objects
+
+
+
+=== VERIFICAÇÃO DE TEXTO ===
+
+src\components\admin\AdminApp.tsx:89:      setError(loginError instanceof Error ? 
+loginError.message : "Não foi possível entrar.")
+src\components\admin\AdminApp.tsx:140:          <label className="text-sm 
+sm:col-span-2">Descrição<textarea className={fieldClass()} rows={3} 
+value={draft.description} onChange={(e) => patch("description", e.target.value)} 
+/></label>
+src\components\admin\AdminApp.tsx:143:          <label className="text-sm">Ordem de 
+exibição<input className={fieldClass()} type="number" value={draft.sortOrder} 
+onChange={(e) => patch("sortOrder", Number(e.target.value))} /></label>
+src\components\admin\AdminApp.tsx:158:  if (!supabase) throw new Error("Supabase não 
+está configurado.")
+src\components\admin\AdminApp.tsx:219:        setError(`Falha ao verificar autorização: 
+${authorizationError.message}`)
+src\components\admin\AdminApp.tsx:278:      setError(`Não foi possível publicar. Nenhuma 
+alteração foi aplicada: ${publishError.message}`)
+src\components\admin\AdminApp.tsx:282:    setNotice("Alterações publicadas. A vitrine 
+recebe a atualização em tempo real ou em até 30 segundos.")
+src\components\admin\AdminApp.tsx:317:      setError(importError instanceof Error ? 
+importError.message : "Não foi possível importar o arquivo.")
+src\components\admin\AdminApp.tsx:321:  if (!supabaseConfigured) return <main 
+className="grid min-h-screen place-items-center bg-[#0b1030] p-6 text-[#fff4d6]"><div 
+className="max-w-xl rounded-3xl bg-[#141b4a] p-8"><h1 className="font-display text-3xl 
+font-extrabold">Supabase não configurado</h1><p className="mt-3 text-[#c9c3a8]">Crie um 
+arquivo <code>.env.local</code> com <code>VITE_SUPABASE_URL</code> e 
+<code>VITE_SUPABASE_ANON_KEY</code>, configure o schema SQL e reinicie o 
+Vite.</p></div></main>
+src\components\admin\AdminApp.tsx:322:  if (!authChecked) return <main className="grid 
+min-h-screen place-items-center bg-[#0b1030] text-[#fff4d6]">Verificando sessão...</main>
+src\components\admin\AdminApp.tsx:324:  if (!authorizationChecked) return <main 
+className="grid min-h-screen place-items-center bg-[#0b1030] text-[#fff4d6]">Verificando 
+autorização...</main>
+src\components\admin\AdminApp.tsx:325:  if (!authorized) return <main className="grid 
+min-h-screen place-items-center bg-[#0b1030] px-5 text-[#fff4d6]"><div 
+className="max-w-lg rounded-3xl bg-[#141b4a] p-8 text-center"><ShieldCheck size={42} 
+className="mx-auto text-[#ffc81e]" /><h1 className="mt-4 font-display text-2xl 
+font-extrabold">Acesso não autorizado</h1><p className="mt-2 text-sm 
+text-[#c9c3a8]">{error || "Esta conta não está autorizada como administradora. Peça a um 
+responsável para adicioná-la à allowlist do Supabase."}</p><Button onClick={() => void 
+supabase?.auth.signOut()} className="mt-6 border 
+border-white/20">Sair</Button></div></main>
+src\components\admin\AdminApp.tsx:328:    { id: "overview", label: "Visão geral", icon: 
+<BarChart3 size={18} /> },
+src\components\admin\AdminApp.tsx:359:        {dirty && <p className="mb-4 text-sm 
+text-[#ffc81e]">Você tem alterações não publicadas.</p>}
+src\components\admin\AdminApp.tsx:363:        {view === "products" && <section><div 
+className="mb-4 flex flex-wrap items-center justify-between gap-3"><p className="text-sm 
+text-[#c9c3a8]">Nome, categoria, preço, peso, visibilidade e ordem. Valores vazios 
+continuam sem informação comercial.</p><Button onClick={() => 
+setEditingProduct(emptyProduct(products.length))} className="bg-[#ffc81e] 
+text-[#0b1030]"><Plus size={17} /> Novo produto</Button></div><div 
+className="overflow-x-auto rounded-2xl border border-white/10"><table className="w-full 
+min-w-[650px] text-left text-sm"><thead className="bg-[#141b4a] 
+text-[#c9c3a8]"><tr>{["Produto", "Categoria", "Peso", "Preço", "Status", "Ordem", 
+""].map((heading) => <th key={heading} className="px-4 py-3 
+font-semibold">{heading}</th>)}</tr></thead><tbody>{[...products].sort((a, b) => 
+a.sortOrder - b.sortOrder).map((product) => <tr key={product.id} className="border-t 
+border-white/10"><td className="px-4 py-3 font-bold">{product.flavor}</td><td 
+className="px-4 py-3">{product.category || "—"}</td><td className="px-4 
+py-3">{product.weightGrams ? `${product.weightGrams} g` : "—"}</td><td className="px-4 
+py-3">{product.price === null ? "Consulte o valor" : 
+product.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</td><td 
+className="px-4 py-3"><button onClick={() => { setProducts((current) => 
+current.map((item) => item.id === product.id ? { ...item, enabled: !item.enabled } : 
+item)); markDirty() }} className={`rounded-full px-3 py-1 text-xs font-bold 
+${product.enabled ? "bg-emerald-900 text-emerald-200" : "bg-white/10 
+text-[#c9c3a8]"}`}>{product.enabled ? "Ativo" : "Inativo"}</button></td><td 
+className="px-4 py-3">{product.sortOrder}</td><td className="px-4 py-3"><div 
+className="flex gap-2"><Button onClick={() => setEditingProduct(product)} 
+className="border border-white/15 px-3">Editar</Button><Button onClick={() => { if 
+(window.confirm(`Excluir ${product.flavor}?`)) { setProducts((current) => 
+current.filter((item) => item.id !== product.id)); markDirty() } }} aria-label={`Excluir 
+${product.flavor}`} className="border border-red-300/20 px-3 text-red-300"><Trash2 
+size={16} /></Button></div></td></tr>)}</tbody></table></div></section>}
+src\components\admin\AdminApp.tsx:367:        {view === "banners" && <section><div 
+className="mb-4 flex justify-end"><Button onClick={addBanner} className="bg-[#ffc81e] 
+text-[#0b1030]"><Plus size={17} /> Adicionar banner</Button></div><div className="grid 
+gap-4 lg:grid-cols-2">{banners.map((banner, index) => <article key={banner.id} 
+className="rounded-2xl border border-white/10 bg-[#141b4a] p-4"><div className="flex 
+items-center justify-between"><h2 className="font-bold">Banner {index + 1}</h2><Button 
+onClick={() => { setBanners((current) => current.filter((item) => item.id !== 
+banner.id)); markDirty() }} className="px-2 text-red-300"><Trash2 size={16} 
+/></Button></div>{banner.image && <img src={banner.image} alt={banner.title} 
+className="mt-3 max-h-48 w-full rounded-xl object-cover" />}<label className="mt-3 block 
+text-sm">Título<input className={fieldClass()} value={banner.title} onChange={(e) => { 
+setBanners((current) => current.map((item) => item.id === banner.id ? { ...item, title: 
+e.target.value } : item)); markDirty() }} /></label><label className="mt-3 block 
+text-sm">Link (opcional)<input className={fieldClass()} type="url" value={banner.href} 
+onChange={(e) => { setBanners((current) => current.map((item) => item.id === banner.id ? 
+{ ...item, href: e.target.value } : item)); markDirty() }} /></label><label 
+className="mt-3 flex min-h-11 cursor-pointer items-center gap-2 text-sm 
+text-[#ffc81e]"><Upload size={16} /> Enviar imagem<input className="sr-only" type="file" 
+accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) void 
+onUpload(file, (url) => { setBanners((current) => current.map((item) => item.id === 
+banner.id ? { ...item, image: url } : item)); markDirty() }, setError) }} 
+/></label><label className="mt-2 flex items-center gap-2 text-sm"><input type="checkbox" 
+checked={banner.enabled} onChange={(e) => { setBanners((current) => current.map((item) 
+=> item.id === banner.id ? { ...item, enabled: e.target.checked } : item)); markDirty() 
+}} /> Publicado na vitrine</label></article>)}</div><p className="mt-4 text-sm 
+text-[#c9c3a8]">Os banners publicados ficam disponíveis no banco para futuras seções do 
+site. Os banners atuais do hero e da tradição também podem ser atualizados em 
+Configurações.</p></section>}
+src\components\admin\AdminApp.tsx:369:        {view === "settings" && <section 
+className="max-w-2xl rounded-2xl border border-white/10 bg-[#141b4a] p-5"><h2 
+className="font-display text-xl font-extrabold">Identidade e contato</h2><label 
+className="mt-4 block text-sm">Slogan<input className={fieldClass()} 
+value={settings.brandSlogan} onChange={(e) => { setSettings((current) => ({ ...current, 
+brandSlogan: e.target.value })); markDirty() }} /></label><label className="mt-4 block 
+text-sm">WhatsApp (DDI + DDD + número)<input className={fieldClass()} 
+inputMode="numeric" value={settings.whatsappNumber} onChange={(e) => { 
+setSettings((current) => ({ ...current, whatsappNumber: e.target.value })); markDirty() 
+}} placeholder="Ex.: 5582..." /></label>{(["heroImage", "traditionImage"] as 
+const).map((key) => <div key={key} className="mt-5"><p className="text-sm">{key === 
+"heroImage" ? "Imagem principal do site" : "Imagem da seção Desde 
+1950"}</p>{settings[key] && <img src={settings[key]} alt="" className="mt-2 max-h-48 
+rounded-xl object-cover" />}<label className="mt-2 flex min-h-11 cursor-pointer 
+items-center gap-2 text-sm text-[#ffc81e]"><Upload size={16} /> Substituir imagem<input 
+type="file" accept="image/*" className="sr-only" onChange={(e) => { const file = 
+e.target.files?.[0]; if (file) void onUpload(file, (url) => { setSettings((current) => 
+({ ...current, [key]: url })); markDirty() }, setError) }} /></label></div>)}<p 
+className="mt-5 text-xs text-[#c9c3a8]">Não alteramos "Desde 1950" nem textos comerciais 
+da marca por padrão.</p></section>}
+src\components\admin\AdminApp.tsx:371:        {view === "backup" && <section 
+className="max-w-2xl space-y-4"><article className="rounded-2xl border border-white/10 
+bg-[#141b4a] p-5"><h2 className="font-display text-xl font-extrabold">Backup dos 
+produtos</h2><p className="mt-2 text-sm text-[#c9c3a8]">Exporta o catálogo em JSON. 
+Importar cria um rascunho validado; os dados só mudam no banco ao publicar.</p><div 
+className="mt-4 flex flex-wrap gap-3"><Button onClick={exportJson} 
+className="bg-[#ffc81e] text-[#0b1030]"><ArrowDownToLine size={17} /> Exportar 
+JSON</Button><label className="inline-flex min-h-10 cursor-pointer items-center gap-2 
+rounded-xl border border-white/20 px-4 text-sm font-bold">Importar JSON<input 
+type="file" accept="application/json,.json" className="sr-only" onChange={(e) => void 
+importJson(e.target.files?.[0])} /></label></div></article><article 
+className="rounded-2xl border border-white/10 bg-[#141b4a] p-5"><h2 
+className="font-display text-xl font-extrabold">Cópia ZIP do projeto</h2><p 
+className="mt-2 text-sm text-[#c9c3a8]">Por segurança, o navegador hospedado não pode 
+ler os arquivos-fonte do servidor. No diretório local do projeto, execute <code 
+className="rounded bg-[#0b1030] px-1.5 py-1 text-[#ffc81e]">npm run backup:zip</code>. O 
+arquivo criado exclui variáveis de ambiente, dependências e builds.</p><Button 
+onClick={() => { navigator.clipboard.writeText("npm run backup:zip").then(() => 
+setBackupMessage("Comando copiado. Execute-o no diretório local do projeto.")).catch(() 
+=> setBackupMessage("Execute npm run backup:zip no diretório local do projeto.")) }} 
+className="mt-4 border border-white/20">Copiar comando</Button>{backupMessage && <p 
+role="status" className="mt-2 text-sm 
+text-emerald-200">{backupMessage}</p>}</article></section>}
+src\components\store\Footer.tsx:17:          {[["#produtos", "Produtos"], ["#tradicao", 
+"Tradição"], ["#como-comprar", "Como comprar"]].map(([h, l]) => (
+src\components\store\Header.tsx:8:  { href: "#tradicao", label: "Tradição" },
+src\components\store\Header.tsx:12:/** Cabeçalho no fluxo normal (não fixo) para não 
+cobrir o palco fixado do carrossel. */
+src\components\store\Hero.tsx:37:        {/* Foto real enviada pela marca. Proporção 
+recorta a base da imagem (ícone de captura de tela). Trocar por foto original em 
+/public/images/banners. */}
+src\components\store\HowToBuy.tsx:44:        {!settings.whatsappNumber && <p 
+className="mt-3 text-sm text-muted-foreground">Número de WhatsApp ainda não configurado 
+(src/config/store.ts).</p>}
+src\components\store\Tradition.tsx:19:          {/* Foto real em loja (mão e corte 
+lateral). Substituir por foto de fábrica/produção quando disponível. */}
+src\components\store\Tradition.tsx:22:            alt="Pacote de Bolachas Maragogi sabor 
+canela na mão de uma pessoa, em uma prateleira de loja"
+src\config\store.ts:11:    tagline: "Qualidade e tradição.",
+src\config\store.ts:18:  /** PENDENTE: link do vídeo (Instagram/YouTube). Vazio = o 
+botão "Play video" leva à seção Tradição. */
+src\config\store.ts:28:  /** PENDENTE: avaliações e curtidas REAIS. O componente 
+original exige números; 0 = ainda não informado. */
+src\config\store.ts:33:    heroText: "Salgada, doce e canela. Tradição de família em 
+cada pacote, desde 1950.",
+src\config\store.ts:38:      "A Indústria Alimentícia Maragogi faz bolachas com 
+qualidade e tradição há mais de setenta anos. Nas embalagens, a mesma promessa de 
+sempre: seja o que for, seja original.",
+
+
+
+=== COMPILAÇÃO ===
+
+> bolachas-maragogi@0.1.0 build
+> tsc --noEmit && vite build
+
+[36mvite v6.4.6 [32mbuilding for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 2040 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                 [39m[1m[2m  0.89 kB[22m[1m[22m[2m Ôöé gzip:   0.47 kB[22m
+[2mdist/[22m[35massets/index-CclleWga.css  [39m[1m[2m 26.16 kB[22m[1m[22m[2m Ôöé gzip:   5.83 kB[22m
+[2mdist/[22m[36massets/index-LB0CcEF7.js   [39m[1m[2m478.62 kB[22m[1m[22m[2m Ôöé gzip: 173.65 kB[22m
+[32mÔ£ô built in 2.29s[39m
